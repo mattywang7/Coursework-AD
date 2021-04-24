@@ -6,6 +6,8 @@ import java.util.Iterator;
 
 public class Estimator implements PlanVisitor {
 
+	private int sumOfCost;		// record the cost estimation
+
 
 	public Estimator() {
 		// empty constructor
@@ -26,6 +28,8 @@ public class Estimator implements PlanVisitor {
 		}
 		
 		op.setOutput(output);
+
+		sumOfCost += input.getTupleCount();
 	}
 
 	public void visit(Project op) {
