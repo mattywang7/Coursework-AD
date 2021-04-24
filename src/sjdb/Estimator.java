@@ -1,8 +1,7 @@
 package sjdb;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class Estimator implements PlanVisitor {
 
@@ -29,10 +28,24 @@ public class Estimator implements PlanVisitor {
 		
 		op.setOutput(output);
 
-		sumOfCost += input.getTupleCount();
+		sumOfCost += output.getTupleCount();
 	}
 
 	public void visit(Project op) {
+		Relation input = op.getInput().getOutput();
+		Relation output = new Relation(input.getTupleCount());
+
+		// find which attrs should be projected
+		// attrsProjected should be subset of input.getAttributes()
+		List<Attribute> attrsProjected = op.getAttributes();
+		for (Attribute attrContained : input.getAttributes()) {
+			if (attrsProjected.contains(attrContained)) {
+				output.addAttribute(new Attribute(attrContained));
+			}
+		}
+
+		op.setOutput(output);
+		sumOfCost += output.getTupleCount();
 	}
 	
 	public void visit(Select op) {
