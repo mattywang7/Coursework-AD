@@ -61,12 +61,12 @@ public class Estimator implements PlanVisitor {
 		// two forms
 		if (predicate.equalsValue()) {
 			// attr=val
-			Attribute leftAttrInput = input.getAttribute(leftAttr);
+			Attribute leftAttrParam = input.getAttribute(leftAttr);
 			// when a=const, T(S) = T(R) / V(R, a)
-			output = new Relation((int) Math.ceil((double) input.getTupleCount() / leftAttrInput.getValueCount()));
+			output = new Relation((int) Math.ceil((double) input.getTupleCount() / leftAttrParam.getValueCount()));
 
 			for (Attribute attrInput : input.getAttributes()) {
-				if (attrInput.equals(leftAttrInput)) {
+				if (attrInput.equals(leftAttrParam)) {
 					// select the only value which equals to val
 					output.addAttribute(new Attribute(attrInput.getName(), 1));
 				} else {
@@ -77,18 +77,18 @@ public class Estimator implements PlanVisitor {
 			sumOfCost += output.getTupleCount();
 		} else {
 			// ATTR=attr
-			Attribute leftAttrInput = input.getAttribute(leftAttr);
-			Attribute rightAttrInput = input.getAttribute(predicate.getRightAttribute());
+			Attribute leftAttrParam = input.getAttribute(leftAttr);
+			Attribute rightAttrParam = input.getAttribute(predicate.getRightAttribute());
 
-			int maxValues = Math.max(leftAttr.getValueCount(), rightAttrInput.getValueCount());
+			int maxValues = Math.max(leftAttrParam.getValueCount(), rightAttrParam.getValueCount());
 			// when ATTR=attr, T(S) = T(R) / max(V(R, A), V(R, B))
 			output = new Relation((int) Math.ceil((double) input.getTupleCount() / maxValues));
 
 			// when ATTR=attr, V(R, A) = min(V(R, A), V(R, B))
 			// when ATTR=attr, V(R, B) = min(V(R, A), V(R, B))
-			int attrValues = Math.min(leftAttrInput.getValueCount(), rightAttrInput.getValueCount());
+			int attrValues = Math.min(leftAttrParam.getValueCount(), rightAttrParam.getValueCount());
 			for (Attribute attrInput : input.getAttributes()) {
-				if (attrInput.equals(leftAttrInput) || attrInput.equals(rightAttrInput)) {
+				if (attrInput.equals(leftAttrParam) || attrInput.equals(rightAttrParam)) {
 					output.addAttribute(new Attribute(attrInput.getName(), attrValues));
 				} else {
 					output.addAttribute(new Attribute(attrInput));
