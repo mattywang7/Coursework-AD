@@ -80,9 +80,9 @@ public class Estimator implements PlanVisitor {
 			Attribute leftAttrInput = input.getAttribute(leftAttr);
 			Attribute rightAttrInput = input.getAttribute(predicate.getRightAttribute());
 
-			int outputTuples = Math.max(leftAttr.getValueCount(), rightAttrInput.getValueCount());
+			int maxValues = Math.max(leftAttr.getValueCount(), rightAttrInput.getValueCount());
 			// when ATTR=attr, T(S) = T(R) / max(V(R, A), V(R, B))
-			output = new Relation((int) Math.ceil((double) input.getTupleCount() / outputTuples));
+			output = new Relation((int) Math.ceil((double) input.getTupleCount() / maxValues));
 
 			// when ATTR=attr, V(R, A) = min(V(R, A), V(R, B))
 			// when ATTR=attr, V(R, B) = min(V(R, A), V(R, B))
@@ -121,5 +121,44 @@ public class Estimator implements PlanVisitor {
 	}
 	
 	public void visit(Join op) {
+		// get the two operands
+		Relation leftInput = op.getLeft().getOutput();
+		Relation rightInput = op.getRight().getOutput();
+
+		// attr1=attr2
+		Predicate predicate = op.getPredicate();
+		Attribute leftAttr = predicate.getLeftAttribute();
+		Attribute rightAttr = predicate.getRightAttribute();
+
+		// get the two attribute of inputs
+		Attribute leftAttrParam = leftInput.getAttribute(leftAttr);
+		Attribute rightAttrParam = rightInput.getAttribute(rightAttr);
+
+		// T(R JOIN S) = T(R)T(S) / max(V(R, A), V(R, B))
+		int maxValues = Math.max(leftAttrParam.getValueCount(), rightAttrParam.getValueCount());
+		int rMultiS = leftInput.getTupleCount() * rightInput.getTupleCount();
+		Relation output = new Relation((int) Math.ceil((double) rMultiS / maxValues));
+
+		// V(R, A) = V(R, B) = min(V(R, A), V(R, B))
+		int minValues = Math.min(leftAttrParam.getValueCount(), rightAttrParam.getValueCount());
+
+		// iterate two relations respectively
+		for (Attribute attrLeftInput : leftInput.getAttributes()) {
+			if (attrLeftInput.equals(leftAttrParam)) {
+				output.addAttribute(new Attribute(attrLeftInput.getName(), minValues));
+			} else {
+				output.addAttribute(new Attribute(attrLeftInput));
+			}
+		}
+		for (Attribute attrRightInput : rightInput.getAttributes()) {
+			if (attrRightInput.equals(rightAttrParam)) {
+				output.addAttribute(new Attribute(attrRightInput.getName(), minValues));
+			} else {
+				output.addAttribute(new Attribute(attrRightInput));
+			}
+		}
+
+		op.setOutput(output);
+		sumOfCost += output.getTupleCount();
 	}
 }
