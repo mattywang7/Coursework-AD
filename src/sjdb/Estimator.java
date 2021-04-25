@@ -102,6 +102,22 @@ public class Estimator implements PlanVisitor {
 	}
 	
 	public void visit(Product op) {
+		// get the two operands
+		Relation leftInput = op.getLeft().getOutput();
+		Relation rightInput = op.getRight().getOutput();
+		Relation output = new Relation(leftInput.getTupleCount() * rightInput.getTupleCount());
+
+		// knowing all attributes have unique global names
+		// no renaming required
+		for (Attribute attrLeftInput : leftInput.getAttributes()) {
+			output.addAttribute(new Attribute(attrLeftInput));
+		}
+		for (Attribute attrRightInput : rightInput.getAttributes()) {
+			output.addAttribute(new Attribute(attrRightInput));
+		}
+
+		op.setOutput(output);
+		sumOfCost += output.getTupleCount();
 	}
 	
 	public void visit(Join op) {
