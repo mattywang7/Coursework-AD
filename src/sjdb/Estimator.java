@@ -161,4 +161,11 @@ public class Estimator implements PlanVisitor {
 		op.setOutput(output);
 		sumOfCost += output.getTupleCount();
 	}
+
+	public int getSumOfCost(Operator plan) {
+		this.sumOfCost = 0;
+		plan.accept(this);
+		return this.sumOfCost;
+	}
+
 }
