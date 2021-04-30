@@ -7,19 +7,18 @@ import java.util.Set;
 
 public class Optimiser implements PlanVisitor {
 
+    // No duplicates because only Attribute overrides equals() and hashCode()
     private final Catalogue catalogue;
-    private final Set<Scan> scanList;
-    private final Set<Predicate> predList;
-    private final Set<Attribute> attrList;
-    private final Set<Operator> opList;        // store newly created ops
+    private final List<Scan> scanList;
+    private final List<Predicate> predList;
+    private final List<Operator> opList;        // store newly created ops
     private final Estimator estimator;
 
     public Optimiser(Catalogue catalogue) {
         this.catalogue = catalogue;
-        scanList = new HashSet<>();
-        predList = new HashSet<>();
-        attrList = new HashSet<>();
-        opList = new HashSet<>();
+        scanList = new ArrayList<>();
+        predList = new ArrayList<>();
+        opList = new ArrayList<>();
         estimator = new Estimator();
     }
 
@@ -44,8 +43,8 @@ public class Optimiser implements PlanVisitor {
      * @param scanList
      * @param predList
      */
-    private void pushSelectAndProjectDown(Set<Operator> opList, Operator plan,
-                                          Set<Scan> scanList, Set<Predicate> predList) {
+    private void pushSelectAndProjectDown(List<Operator> opList, Operator plan,
+                                          List<Scan> scanList, List<Predicate> predList) {
         for (Scan scan : scanList) {
             if (scan.getOutput() == null) {
                 scan.accept(estimator);  // set the output
@@ -74,6 +73,7 @@ public class Optimiser implements PlanVisitor {
             }
             List<Predicate> tmpPredList = new ArrayList<>(predList);
             // get the attrs that should be projected
+            // Use Set because addAll() may cause Attribute to be duplicates
             Set<Attribute> projectedAttrs = new HashSet<>();  // in case addAll will add duplicate attrs
             for (Predicate pred : tmpPredList) {
                 Attribute leftAttr = pred.getLeftAttribute();
@@ -106,7 +106,7 @@ public class Optimiser implements PlanVisitor {
      * @param predList
      * @return the optimised plan which costs least
      */
-    private Operator reorderSubtrees(Set<Operator> opList, Operator plan, Set<Predicate> predList) {
+    private Operator reorderSubtrees(List<Operator> opList, Operator plan, List<Predicate> predList) {
         List<Predicate> tmpPredList = new ArrayList<>(predList);
         List<List<Predicate>> predCombinations = allPossiblePred(tmpPredList);
         Operator planOpt = null;
@@ -144,17 +144,6 @@ public class Optimiser implements PlanVisitor {
             Attribute leftAttr = pred.getLeftAttribute();
             Attribute rightAttr = pred.getRightAttribute();
 
-//            for (Operator op : opList) {
-//                Relation opOutput = op.getOutput();
-//                if (opOutput.getAttributes().contains(leftAttr)) {
-//                    leftOp = op;
-//                    opList.remove(op);
-//                }
-//                if (opOutput.getAttributes().contains(rightAttr)) {
-//                    rightOp = op;
-//                    opList.remove(op);
-//                }
-//            }
             while (!opList.isEmpty()) {
                 Operator opTmp = opList.get(0);
                 Relation opOutput = opTmp.getOutput();
@@ -191,7 +180,8 @@ public class Optimiser implements PlanVisitor {
             }
 
             // get attrs that should be projected at last
-            List<Attribute> attrParams = new ArrayList<>();
+            // Use Set because addAll() may cause Attribute to be duplicate
+            Set<Attribute> attrParams = new HashSet<>();
             for (Predicate tmpPred : predList) {
                 Attribute tmpLeftAttr = tmpPred.getLeftAttribute();
                 Attribute tmpRightAttr = tmpPred.getRightAttribute();
@@ -267,7 +257,7 @@ public class Optimiser implements PlanVisitor {
     }
 
     /**
-     * Create new SCAN operators and add to list.
+     * Create new SCAN operators and collect all new scans to list.
      * @param op Scan operator to be visited
      */
     @Override
@@ -277,28 +267,18 @@ public class Optimiser implements PlanVisitor {
         scanList.add(freshScan);
     }
 
-    /**
-     * Add all the projected attrs to list.
-     * @param op Project operator to be visited
-     */
     @Override
     public void visit(Project op) {
-        attrList.addAll(op.getAttributes());
+        // empty function
     }
 
     /**
-     * Add predicates and their associated attrs to list.
+     * Collect all predicates to list.
      * @param op Select operator to be visited
      */
     @Override
     public void visit(Select op) {
         Predicate pred = op.getPredicate();
-        Attribute leftAttr = pred.getLeftAttribute();
-        Attribute rightAttr = pred.getRightAttribute();
-        attrList.add(leftAttr);
-        if (rightAttr != null) {
-            attrList.add(rightAttr);
-        }
         predList.add(pred);
     }
 
