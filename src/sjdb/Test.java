@@ -19,9 +19,8 @@ public class Test {
 		plan.accept(estimator);
 		plan.accept(inspector);
 
-		Optimiser2 optimiser2 = new Optimiser2(catalogue);
-		Optimiser optimiser1 = new Optimiser(catalogue);
-		Operator planopt = optimiser1.optimise(plan);
+		Optimiser optimiser = new Optimiser(catalogue);
+		Operator planopt = optimiser.optimise(plan);
 		planopt.accept(estimator);
 		planopt.accept(inspector);
 		System.out.println(estimator.getSumOfCost(planopt));
