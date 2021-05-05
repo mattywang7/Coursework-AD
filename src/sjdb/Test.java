@@ -23,6 +23,7 @@ public class Test {
 		Operator planopt = optimiser.optimise(plan);
 		planopt.accept(estimator);
 		planopt.accept(inspector);
+		System.out.println(estimator.getSumOfCost(planopt));
 	}
 	
 	public static Catalogue createCatalogue() {

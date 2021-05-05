@@ -215,14 +215,12 @@ public class Optimiser implements PlanVisitor {
             }
         }
 
-        // if opList.size() > 1, then perform a product
-        while (opList.size() > 1) {
-            Operator prodLeft = opList.get(0);
-            Operator prodRight = opList.get(1);
-            Product freshProduct = new Product(prodLeft, prodRight);
+        // if opList.size() >= 2, then perform a product
+        while (opList.size() >= 2) {
+            Product freshProduct = new Product(opList.get(0), opList.get(1));
             freshProduct.accept(estimator);
-            opList.remove(prodLeft);
-            opList.remove(prodRight);
+            opList.remove(0);
+            opList.remove(1);
             opList.add(freshProduct);
         }
 
